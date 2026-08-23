@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(PaperNotFoundException.class)
-	ProblemDetail handleNotFound(PaperNotFoundException exception) {
-		return problem(HttpStatus.NOT_FOUND, "Paper not found", exception.getMessage(), "PAPER_NOT_FOUND");
+	@ExceptionHandler({PaperNotFoundException.class, LibraryPaperNotFoundException.class})
+	ProblemDetail handleNotFound(RuntimeException exception) {
+		String code = exception instanceof LibraryPaperNotFoundException
+				? "LIBRARY_PAPER_NOT_FOUND"
+				: "PAPER_NOT_FOUND";
+		return problem(HttpStatus.NOT_FOUND, "Paper not found", exception.getMessage(), code);
 	}
 
 	@ExceptionHandler({IllegalArgumentException.class, ConstraintViolationException.class})

@@ -11,8 +11,9 @@ final router = GoRouter(
     GoRoute(path: '/', redirect: (context, state) => '/home'),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+    GoRoute(path: '/bookmarks', redirect: (context, state) => '/library'),
     GoRoute(
-      path: '/bookmarks',
+      path: '/library',
       builder: (context, state) => const BookmarksScreen(),
     ),
     GoRoute(path: '/graph', builder: (context, state) => const GraphScreen()),

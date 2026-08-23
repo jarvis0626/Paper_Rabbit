@@ -12,7 +12,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Saved papers',
-            onPressed: () => context.push('/bookmarks'),
+            onPressed: () => context.push('/library'),
             icon: const Icon(Icons.bookmarks_outlined),
           ),
         ],

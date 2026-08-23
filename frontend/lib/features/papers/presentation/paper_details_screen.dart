@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../library/data/library_models.dart';
+import '../../library/data/library_repository.dart';
 import '../data/paper_models.dart';
 import '../data/paper_repository.dart';
 import 'paper_card.dart';
@@ -21,6 +23,9 @@ class _PaperDetailsScreenState extends ConsumerState<PaperDetailsScreen> {
   late Future<List<PaperSummary>> _related;
   Future<PaperPage>? _references;
   Future<PaperPage>? _citations;
+  LibraryPaper? _savedPaper;
+  bool _isCheckingLibrary = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -42,6 +47,42 @@ class _PaperDetailsScreenState extends ConsumerState<PaperDetailsScreen> {
     _related = repository.getRelated(widget.paperId);
     _references = null;
     _citations = null;
+    _savedPaper = null;
+    _isCheckingLibrary = true;
+    _checkSaved(widget.paperId);
+  }
+
+  Future<void> _checkSaved(String paperId) async {
+    try {
+      final saved = await ref.read(libraryRepositoryProvider).get(paperId);
+      if (!mounted || widget.paperId != paperId) return;
+      setState(() {
+        _savedPaper = saved;
+        _isCheckingLibrary = false;
+      });
+    } catch (_) {
+      if (!mounted || widget.paperId != paperId) return;
+      setState(() => _isCheckingLibrary = false);
+    }
+  }
+
+  Future<void> _save(PaperDetails paper) async {
+    setState(() => _isSaving = true);
+    try {
+      final saved = await ref.read(libraryRepositoryProvider).save(paper);
+      if (!mounted) return;
+      setState(() => _savedPaper = saved);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved to your research library.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _open(String? url) async {
@@ -144,6 +185,26 @@ class _PaperDetailsScreenState extends ConsumerState<PaperDetailsScreen> {
                       : () => _open(paper.externalUrl),
                   icon: const Icon(Icons.open_in_new),
                   label: const Text('Open original'),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: _isCheckingLibrary || _isSaving
+                      ? null
+                      : _savedPaper == null
+                      ? () => _save(paper)
+                      : () => context.push('/library').then((_) {
+                          if (mounted) _checkSaved(paper.id);
+                        }),
+                  icon: _isSaving
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _savedPaper == null
+                              ? Icons.bookmark_add_outlined
+                              : Icons.bookmark,
+                        ),
+                  label: Text(_savedPaper == null ? 'Save' : 'Saved'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () =>
