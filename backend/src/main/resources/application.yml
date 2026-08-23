@@ -43,3 +43,5 @@ paper-rabbit:
     initial-backoff: ${OPENALEX_INITIAL_BACKOFF:250ms}
   web:
     allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+  graph:
+    persistence-enabled: ${GRAPH_PERSISTENCE_ENABLED:false}

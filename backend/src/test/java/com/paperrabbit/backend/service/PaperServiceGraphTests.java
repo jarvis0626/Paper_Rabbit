@@ -3,6 +3,7 @@ package com.paperrabbit.backend.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,8 @@ class PaperServiceGraphTests {
 
 	@Test
 	void graphPreservesCitationDirectionAndDeduplicatesNodes() {
-		PaperService service = new PaperService(new GraphFixtureClient());
+		AtomicReference<CitationGraphDto> stored = new AtomicReference<>();
+		PaperService service = new PaperService(new GraphFixtureClient(), stored::set);
 
 		CitationGraphDto graph = service.getCitationGraph("w100", 10, 10);
 
@@ -29,6 +31,18 @@ class PaperServiceGraphTests {
 				new CitationGraphEdgeDto("W200", "W100", "cites"),
 				new CitationGraphEdgeDto("W300", "W100", "cites"));
 		assertThat(graph.truncated()).isTrue();
+		assertThat(stored.get()).isSameAs(graph);
+	}
+
+	@Test
+	void graphRemainsAvailableWhenPersistenceFails() {
+		PaperService service = new PaperService(new GraphFixtureClient(), graph -> {
+			throw new IllegalStateException("Neo4j unavailable");
+		});
+
+		CitationGraphDto graph = service.getCitationGraph("W100", 10, 10);
+
+		assertThat(graph.nodes()).hasSize(3);
 	}
 
 	private static class GraphFixtureClient implements PaperApiClient {

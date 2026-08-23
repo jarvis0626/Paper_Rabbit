@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.paperrabbit.backend.dto.CitationGraphDto;
@@ -16,16 +19,25 @@ import com.paperrabbit.backend.dto.CitationGraphNodeDto;
 import com.paperrabbit.backend.dto.PageResponse;
 import com.paperrabbit.backend.dto.PaperDetailsDto;
 import com.paperrabbit.backend.dto.PaperSummaryDto;
+import com.paperrabbit.backend.graph.CitationGraphStore;
 
 @Service
 public class PaperService {
 
+	private static final Logger log = LoggerFactory.getLogger(PaperService.class);
 	private static final Pattern OPENALEX_WORK_ID = Pattern.compile("W\\d{1,20}");
 
 	private final PaperApiClient paperApiClient;
+	private final CitationGraphStore citationGraphStore;
 
 	public PaperService(PaperApiClient paperApiClient) {
+		this(paperApiClient, graph -> { });
+	}
+
+	@Autowired
+	public PaperService(PaperApiClient paperApiClient, CitationGraphStore citationGraphStore) {
 		this.paperApiClient = paperApiClient;
+		this.citationGraphStore = citationGraphStore;
 	}
 
 	public PageResponse<PaperSummaryDto> search(
@@ -76,8 +88,16 @@ public class PaperService {
 			}
 		}
 
-		return new CitationGraphDto(root.id(), List.copyOf(nodes.values()), List.copyOf(edges),
+		CitationGraphDto graph = new CitationGraphDto(
+				root.id(), List.copyOf(nodes.values()), List.copyOf(edges),
 				root.referencedWorkIds().size() > referenceIds.size() || citations.hasNext());
+		try {
+			citationGraphStore.save(graph);
+		} catch (RuntimeException exception) {
+			log.warn("Citation graph persistence failed for {}. Live graph remains available: {}",
+					normalizedId, exception.getMessage());
+		}
+		return graph;
 	}
 
 	private String normalizePaperId(String paperId) {
