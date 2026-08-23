@@ -1,5 +1,5 @@
 name: frontend
-description: "A new Flutter project."
+description: "Cross-platform academic paper discovery and research workflow client."
 publish_to: 'none'
 version: 0.1.0+1
 
