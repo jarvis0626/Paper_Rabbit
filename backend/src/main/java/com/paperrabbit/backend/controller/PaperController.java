@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paperrabbit.backend.dto.PageResponse;
+import com.paperrabbit.backend.dto.CitationGraphDto;
 import com.paperrabbit.backend.dto.PaperDetailsDto;
 import com.paperrabbit.backend.dto.PaperSummaryDto;
 import com.paperrabbit.backend.service.PaperService;
@@ -65,5 +66,13 @@ public class PaperController {
 			@RequestParam(defaultValue = "1") @Min(1) @Max(500) int page,
 			@RequestParam(defaultValue = "20") @Min(1) @Max(50) int pageSize) {
 		return paperService.getCitations(paperId, page, pageSize);
+	}
+
+	@GetMapping("/{paperId}/graph")
+	public CitationGraphDto getCitationGraph(
+			@PathVariable String paperId,
+			@RequestParam(defaultValue = "12") @Min(1) @Max(25) int references,
+			@RequestParam(defaultValue = "12") @Min(1) @Max(25) int citations) {
+		return paperService.getCitationGraph(paperId, references, citations);
 	}
 }

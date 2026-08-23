@@ -78,6 +78,17 @@ class PaperRepository {
     ),
   );
 
+  Future<CitationGraph> getCitationGraph(
+    String paperId, {
+    int references = 12,
+    int citations = 12,
+  }) async => CitationGraph.fromJson(
+    await _getJson(
+      '/api/papers/${Uri.encodeComponent(paperId)}/graph',
+      queryParameters: {'references': references, 'citations': citations},
+    ),
+  );
+
   Future<Map<String, dynamic>> _getJson(
     String path, {
     Map<String, dynamic>? queryParameters,

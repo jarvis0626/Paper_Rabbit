@@ -14,6 +14,8 @@ public interface PaperApiClient {
 
 	List<PaperSummaryDto> getRelatedPapers(String paperId, int limit);
 
+	List<PaperSummaryDto> getPapers(List<String> paperIds);
+
 	PageResponse<PaperSummaryDto> getReferences(String paperId, int page, int pageSize);
 
 	PageResponse<PaperSummaryDto> getCitations(String paperId, int page, int pageSize);

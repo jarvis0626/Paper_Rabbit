@@ -163,6 +163,86 @@ class PaperPage {
   final bool hasNext;
 }
 
+enum CitationGraphNodeKind {
+  root,
+  reference,
+  citation;
+
+  static CitationGraphNodeKind fromJson(Object? value) => switch (value) {
+    'reference' => reference,
+    'citation' => citation,
+    _ => root,
+  };
+}
+
+class CitationGraphNode {
+  const CitationGraphNode({
+    required this.id,
+    required this.title,
+    required this.authors,
+    required this.citationCount,
+    required this.kind,
+    this.year,
+  });
+
+  factory CitationGraphNode.fromJson(Map<String, dynamic> json) =>
+      CitationGraphNode(
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? 'Untitled paper',
+        authors: _objects(json['authors']).map(Author.fromJson).toList(),
+        year: (json['year'] as num?)?.toInt(),
+        citationCount: (json['citationCount'] as num?)?.toInt() ?? 0,
+        kind: CitationGraphNodeKind.fromJson(json['kind']),
+      );
+
+  final String id;
+  final String title;
+  final List<Author> authors;
+  final int? year;
+  final int citationCount;
+  final CitationGraphNodeKind kind;
+}
+
+class CitationGraphEdge {
+  const CitationGraphEdge({
+    required this.sourceId,
+    required this.targetId,
+    required this.relation,
+  });
+
+  factory CitationGraphEdge.fromJson(Map<String, dynamic> json) =>
+      CitationGraphEdge(
+        sourceId: json['sourceId'] as String? ?? '',
+        targetId: json['targetId'] as String? ?? '',
+        relation: json['relation'] as String? ?? 'cites',
+      );
+
+  final String sourceId;
+  final String targetId;
+  final String relation;
+}
+
+class CitationGraph {
+  const CitationGraph({
+    required this.rootId,
+    required this.nodes,
+    required this.edges,
+    required this.truncated,
+  });
+
+  factory CitationGraph.fromJson(Map<String, dynamic> json) => CitationGraph(
+    rootId: json['rootId'] as String? ?? '',
+    nodes: _objects(json['nodes']).map(CitationGraphNode.fromJson).toList(),
+    edges: _objects(json['edges']).map(CitationGraphEdge.fromJson).toList(),
+    truncated: json['truncated'] as bool? ?? false,
+  );
+
+  final String rootId;
+  final List<CitationGraphNode> nodes;
+  final List<CitationGraphEdge> edges;
+  final bool truncated;
+}
+
 List<Map<String, dynamic>> _objects(Object? value) {
   if (value is! List) return const [];
   return value

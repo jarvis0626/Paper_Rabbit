@@ -48,4 +48,28 @@ void main() {
     expect(paper.abstractText, isNull);
     expect(paper.dataSource, 'OpenAlex');
   });
+
+  test('CitationGraph maps directed edges and node roles', () {
+    final graph = CitationGraph.fromJson({
+      'rootId': 'W1',
+      'nodes': [
+        {'id': 'W1', 'title': 'Root', 'citationCount': 10, 'kind': 'root'},
+        {
+          'id': 'W2',
+          'title': 'Reference',
+          'citationCount': 5,
+          'kind': 'reference',
+        },
+      ],
+      'edges': [
+        {'sourceId': 'W1', 'targetId': 'W2', 'relation': 'cites'},
+      ],
+      'truncated': true,
+    });
+
+    expect(graph.nodes.last.kind, CitationGraphNodeKind.reference);
+    expect(graph.edges.single.sourceId, 'W1');
+    expect(graph.edges.single.targetId, 'W2');
+    expect(graph.truncated, isTrue);
+  });
 }

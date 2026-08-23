@@ -79,7 +79,7 @@ public class OpenAlexApiClient implements PaperApiClient {
 	public List<PaperSummaryDto> getRelatedPapers(String paperId, int limit) {
 		PaperDetailsDto paper = getPaper(paperId);
 		List<String> ids = paper.relatedWorkIds().stream().limit(limit).toList();
-		return batchFetch(ids);
+		return getPapers(ids);
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class OpenAlexApiClient implements PaperApiClient {
 		List<String> ids = paper.referencedWorkIds();
 		int fromIndex = Math.min((page - 1) * pageSize, ids.size());
 		int toIndex = Math.min(fromIndex + pageSize, ids.size());
-		List<PaperSummaryDto> references = batchFetch(ids.subList(fromIndex, toIndex));
+		List<PaperSummaryDto> references = getPapers(ids.subList(fromIndex, toIndex));
 		return new PageResponse<>(references, page, pageSize, ids.size(), toIndex < ids.size());
 	}
 
@@ -106,7 +106,8 @@ public class OpenAlexApiClient implements PaperApiClient {
 		return mapPage(get(uri, null), page, pageSize);
 	}
 
-	private List<PaperSummaryDto> batchFetch(List<String> ids) {
+	@Override
+	public List<PaperSummaryDto> getPapers(List<String> ids) {
 		if (ids.isEmpty()) {
 			return List.of();
 		}
