@@ -1,0 +1,29 @@
+databases:
+  - name: paper-rabbit-postgres
+    plan: free
+    region: singapore
+    databaseName: paper_rabbit
+    user: paper_rabbit
+
+services:
+  - type: web
+    name: paper-rabbit-api
+    runtime: docker
+    plan: free
+    region: singapore
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: paper-rabbit-postgres
+          property: connectionString
+      - key: GRAPH_PERSISTENCE_ENABLED
+        value: "false"
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75.0

@@ -18,10 +18,10 @@ mock paper data.
   during graph exploration.
 - Explicit loading, empty, unavailable, and retry states throughout the main journey.
 
-Paper Rabbit is currently a single-user local application. Authentication, multi-user
-data isolation, PDF ingestion, and AI-generated summaries are not implemented. AI work
-is intentionally deferred until a real provider, credentials, cost controls, and clear
-failure behavior are selected.
+Paper Rabbit is currently a single-user prototype that can run locally or as a hosted
+staging deployment. Authentication, multi-user data isolation, PDF ingestion, and
+AI-generated summaries are not implemented. Do not publish the shared library endpoints
+to real users until authentication and per-user ownership are added.
 
 ## Architecture
 
@@ -41,48 +41,30 @@ Spring Boot API ---------> OpenAlex API
 
 The Flutter client uses Riverpod for dependency injection, Dio for HTTP, and GoRouter
 for navigation. The Java 21 backend uses Spring Boot, Spring MVC, Spring Data JPA,
-Spring Data Neo4j, Flyway, PostgreSQL, and an H2-backed test profile.
+Spring Data Neo4j, Flyway, PostgreSQL, and an H2-backed local/test profile.
 
 ## Prerequisites
 
 - Java 21 or newer.
 - Flutter with a Dart SDK compatible with `^3.12.2`.
-- Docker Desktop or another Docker Compose implementation for PostgreSQL and Neo4j.
+- Docker Desktop or another Docker Compose implementation only if local PostgreSQL and
+  Neo4j persistence are wanted.
 
 An OpenAlex API key is optional for development, but is recommended for sustained use.
 
 ## Local setup
 
-### 1. Start PostgreSQL and Neo4j
+### 1. Start the backend
 
-From the repository root:
+The default `local` profile needs no Docker and persists its H2 database under the
+ignored `backend/.data` directory:
 
 ```powershell
 Set-Location backend
-Copy-Item .env.example .env
-```
-
-Replace both placeholder passwords in `.env`, then start the infrastructure:
-
-```powershell
-docker compose up -d
-```
-
-Compose automatically reads `backend/.env`. The backend also imports that file when it
-is started from the `backend` directory. `.env` is ignored by Git.
-
-If Neo4j is not wanted, set `GRAPH_PERSISTENCE_ENABLED=false`. Search and the live
-citation explorer continue to work without graph persistence.
-
-### 2. Start the backend
-
-On Windows:
-
-```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-On macOS or Linux:
+On macOS or Linux, use:
 
 ```bash
 ./mvnw spring-boot:run
@@ -91,24 +73,52 @@ On macOS or Linux:
 Flyway creates or upgrades the personal-library schema before Hibernate validates it.
 Once ready:
 
-- API base: `http://localhost:8080/api`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/api-docs`
-- Health: `http://localhost:8080/actuator/health`
+- API base: `http://localhost:8081/api`
+- Swagger UI: `http://localhost:8081/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8081/api-docs`
+- Health: `http://localhost:8081/actuator/health`
 
-### 3. Start Flutter
+Port 8081 is intentional because Oracle Database commonly occupies port 8080 on Windows.
+To use PostgreSQL and Neo4j locally instead, copy `.env.example` to `.env`, run
+`docker compose up -d`, then set `$env:SPRING_PROFILES_ACTIVE='production'` before
+starting the backend.
+
+### 2. Start Flutter
 
 In another terminal:
 
 ```powershell
 Set-Location frontend
 flutter pub get
-flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8080
+flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8081
 ```
 
-Android emulators default to `http://10.0.2.2:8080`; web and desktop default to
-`http://localhost:8080`. Use `--dart-define=API_BASE_URL=...` for a physical device or
+Android emulators default to `http://10.0.2.2:8081`; web and desktop default to
+`http://localhost:8081`. Use `--dart-define=API_BASE_URL=...` for a physical device or
 another deployment.
+
+## Hosted staging deployment
+
+The repository includes a multi-stage backend `Dockerfile` and a root `render.yaml`
+Blueprint. On Render:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jarvis0626/Paper_Rabbit)
+
+1. Create a Blueprint and connect `jarvis0626/Paper_Rabbit`.
+2. Render creates the API and PostgreSQL database in Singapore and injects the database
+   credentials without committing them.
+3. Wait for `/actuator/health` to become healthy, then copy the assigned HTTPS URL.
+4. Run or build Flutter with that URL:
+
+```powershell
+flutter run -d emulator-5554 --dart-define=API_BASE_URL=https://YOUR-SERVICE.onrender.com
+flutter build appbundle --release --dart-define=API_BASE_URL=https://YOUR-SERVICE.onrender.com
+```
+
+HTTPS is required for a release deployment. Render's free service is suitable only for
+staging: it sleeps after inactivity, and free PostgreSQL expires after 30 days. Upgrade
+both resources before relying on them for a Play Store release. Add authentication and
+per-user library ownership before giving the hosted URL to multiple users.
 
 ## Configuration
 
@@ -116,6 +126,7 @@ The main backend settings are environment variables or entries in `backend/.env`
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
+| `SERVER_PORT` | Local backend port | `8081` |
 | `DB_URL` | PostgreSQL JDBC URL | `jdbc:postgresql://localhost:5432/paperrabbit_db` |
 | `DB_USERNAME` | PostgreSQL user | `paper_rabbit` |
 | `DB_PASSWORD` | PostgreSQL password | required |
@@ -124,7 +135,7 @@ The main backend settings are environment variables or entries in `backend/.env`
 | `NEO4J_PASSWORD` | Neo4j password | required by the driver configuration |
 | `GRAPH_PERSISTENCE_ENABLED` | Persist explored citation graphs | `false` |
 | `OPENALEX_API_KEY` | Optional OpenAlex bearer token | empty |
-| `APP_ALLOWED_ORIGINS` | Comma-separated browser origins | localhost ports 3000 and 8080 |
+| `APP_ALLOWED_ORIGINS` | Comma-separated browser origins | localhost ports 3000 and 8081 |
 
 OpenAlex connection timeouts, retry attempts, and backoff can also be overridden with
 the `OPENALEX_CONNECT_TIMEOUT`, `OPENALEX_READ_TIMEOUT`, `OPENALEX_MAX_ATTEMPTS`, and

@@ -1,0 +1,12 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  health:
+    neo4j:
+      enabled: false
+
+paper-rabbit:
+  graph:
+    persistence-enabled: ${GRAPH_PERSISTENCE_ENABLED:false}

@@ -10,7 +10,10 @@ final dioProvider = Provider<Dio>((ref) {
     BaseOptions(
       baseUrl: ApiConfig.baseUrl,
       connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 25),
+      // Hosted staging services can need extra time for their first request
+      // after an idle spin-down. The backend still applies its own bounded
+      // timeout and retry policy to OpenAlex.
+      receiveTimeout: const Duration(seconds: 75),
       sendTimeout: const Duration(seconds: 10),
     ),
   );
@@ -141,6 +144,12 @@ class PaperRepository {
     if (error.type == DioExceptionType.connectionError) {
       return const ApiException(
         'Cannot reach the Paper Rabbit server. Check that the backend is running.',
+      );
+    }
+    final statusCode = error.response?.statusCode;
+    if (statusCode != null) {
+      return ApiException(
+        'The Paper Rabbit server returned HTTP $statusCode. Please try again shortly.',
       );
     }
     return const ApiException('Paper Rabbit could not complete that request.');
