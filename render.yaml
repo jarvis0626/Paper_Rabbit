@@ -23,6 +23,14 @@ services:
         fromDatabase:
           name: paper-rabbit-postgres
           property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: paper-rabbit-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: paper-rabbit-postgres
+          property: password
       - key: GRAPH_PERSISTENCE_ENABLED
         value: "false"
       - key: JAVA_TOOL_OPTIONS
