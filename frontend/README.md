@@ -6,7 +6,8 @@ citation exploration, and a persistent research-library workflow.
 See the [project README](../README.md) for complete setup, architecture, configuration,
 testing, and current feature status.
 
-For a local web session with the backend on port 8081:
+The hosted API is used by default. To run a local web session against a backend on
+port 8081:
 
 ```powershell
 flutter pub get

@@ -90,12 +90,13 @@ In another terminal:
 ```powershell
 Set-Location frontend
 flutter pub get
-flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8081
+flutter run -d chrome --web-port 3000
 ```
 
-Android emulators default to `http://10.0.2.2:8081`; web and desktop default to
-`http://localhost:8081`. Use `--dart-define=API_BASE_URL=...` for a physical device or
-another deployment.
+All clients default to the hosted HTTPS API at
+`https://paper-rabbit-api.onrender.com`. To use the local backend instead, pass
+`--dart-define=API_BASE_URL=http://10.0.2.2:8081` for an Android emulator or
+`--dart-define=API_BASE_URL=http://localhost:8081` for web and desktop.
 
 ## Hosted staging deployment
 
@@ -107,12 +108,12 @@ Blueprint. On Render:
 1. Create a Blueprint and connect `jarvis0626/Paper_Rabbit`.
 2. Render creates the API and PostgreSQL database in Singapore and injects the database
    credentials without committing them.
-3. Wait for `/actuator/health` to become healthy, then copy the assigned HTTPS URL.
-4. Run or build Flutter with that URL:
+3. Wait for `/actuator/health` to become healthy. The checked-in client already uses
+   `https://paper-rabbit-api.onrender.com` by default.
+4. Build the Android App Bundle:
 
 ```powershell
-flutter run -d emulator-5554 --dart-define=API_BASE_URL=https://YOUR-SERVICE.onrender.com
-flutter build appbundle --release --dart-define=API_BASE_URL=https://YOUR-SERVICE.onrender.com
+flutter build appbundle --release
 ```
 
 HTTPS is required for a release deployment. Render's free service is suitable only for
