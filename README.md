@@ -203,6 +203,7 @@ filters, client model parsing, app navigation, paper cards, and the library empt
 - Add PDF ingestion and section-aware reading tools.
 - Add cached graph reads and deeper multi-hop graph expansion.
 - Add end-to-end tests against containerized PostgreSQL and Neo4j in CI.
+- Add hybrid configuration for website and app to work together webdsite allows researchers to use the provide research papers to add as citations, build references etc.
 
 ## License
 
